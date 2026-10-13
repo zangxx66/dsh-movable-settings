@@ -45,6 +45,7 @@ client.js             核心实现（DOM 增强 + settings.action 最大化/重�
 locale/zh.json        插件显示名与描述（中文）
 locale/en.json        插件显示名与描述（英文）
 icon.svg              插件图标
+LICENSE               MIT 许可证
 test/dom-stub.mjs     最小 DOM 桩
 test/enhancer.test.mjs 行为测试（node:test）
 ```
@@ -83,3 +84,7 @@ node --test test/manifest.test.mjs
 - 上游若连 `data-shortcut-modal="settings"` 属性一并改名，插件无从识别该弹窗，会完全静默（不改动、不告警）；这属于不可探测的结构变更。
 - 缩放手柄覆盖在面板外缘 6px 上，Windows 经典滚动条（约 15px 宽）的最外侧几个像素会被手柄占用，其余滚动条区域仍可点击。
 - 本仓库的自动化测试跑在最小 DOM 桩上，只覆盖插件自身的逻辑；浏览器渲染与视觉一致性仍需真机核验。
+
+## 许可证
+
+[MIT](LICENSE) © 2026 ricardo
