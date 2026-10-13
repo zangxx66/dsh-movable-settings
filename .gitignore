@@ -1,0 +1,14 @@
+# 依赖
+node_modules/
+
+# dsh-graph 看板数据（由插件自身管理，不进父仓库）
+.dsh-graph/
+
+# prompt-setting 插件的 workspace 数据
+.dsh-prompt-setting/
+
+# 临时与构建产物
+tmp/
+dist/
+*.log
+.DS_Store
