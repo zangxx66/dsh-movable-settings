@@ -25,8 +25,12 @@ Turns the built-in DSH **Settings** dialog into a movable, resizable, maximizabl
   plugin_manager action=install_bundle target=dsh-movable-settings
   ```
 
-  也可以直接对会话里的 Agent 说「帮我安装 dsh-movable-settings 插件」。
-  Or just ask the agent in a session to install it. Then refresh the page.
+  也可以直接对会话里的 Agent 说「帮我安装 dsh-movable-settings 插件」；
+  或用 CLI 装包：`dsh plugin --profile web add dsh-movable-settings`（CLI 只把包装进 profile，之后需在「设置 → 插件」里启用）。
+
+  Or just ask the agent in a session to install it; with the CLI, run
+  `dsh plugin --profile web add dsh-movable-settings` (package only — enable it under
+  Settings → Plugins afterwards). Then refresh the page.
 
 ## 开发 / Development
 

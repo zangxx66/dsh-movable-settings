@@ -12,7 +12,7 @@ Turn the built-in **Settings** dialog of the DSH Web GUI into a floating window 
 
 ## 安装 / Installation
 
-在 DSH 里安装，三种方式任选。Install inside DSH — pick any of the three.
+在 DSH 里安装，四种方式任选。Install inside DSH — pick any of the four.
 
 **方式一：让会话里的 Agent 装（推荐）** — Ask the agent in any DSH session:
 
@@ -24,13 +24,22 @@ Agent 会替你执行 / the agent runs:
 plugin_manager action=install_bundle target=dsh-movable-settings
 ```
 
-**方式二：自己调用同一个工具** — Call it yourself:
+**方式二：`dsh` 命令行** — With the `dsh` CLI:
+
+```bash
+dsh plugin --profile web add dsh-movable-settings
+```
+
+> `dsh plugin` 把剩余参数转发给 profile 目录里的 pnpm，因此它只负责**装包**，不会把包登记进 profile 的 bundle 层（`~/.dsh/profiles/web/package.json` 的 `dsh.profile.bundles`）。装完请在 DSH 的「设置 → 插件」里启用它，或改用方式一 / 方式三由插件管理器一步到位。
+> `dsh plugin` merely forwards the arguments to pnpm inside the profile directory — it installs the package but does **not** register it in `dsh.profile.bundles`, so enable it under DSH's Settings → Plugins afterwards, or use method 1 / 3 to let the plugin manager do both steps.
+
+**方式三：自己调用 plugin_manager 工具（与方式一等价）** — Call the tool yourself:
 
 ```
 plugin_manager action=install_bundle target=dsh-movable-settings
 ```
 
-**方式三：本地目录（开发版 / 尚未发布）** — From a local checkout (development build):
+**方式四：本地目录（开发版 / 尚未发布）** — From a local checkout (development build):
 
 ```
 plugin_manager action=install_bundle target=<本目录的绝对路径 / absolute path to this directory>
