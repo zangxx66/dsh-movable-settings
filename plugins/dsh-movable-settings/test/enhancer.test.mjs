@@ -115,6 +115,45 @@ test('上游锚点结构不匹配时静默降级：原样式不变、恰好一�
   assert.equal(env.errors.length, 0);
 });
 
+test('锚点命中但内部结构异常（无子元素）时同样降级：一条 warn、零改动', () => {
+  const env = createEnvironment();
+  boot(env);
+  const broken = env.element('div');
+  broken.setAttribute('data-shortcut-modal', 'settings');
+  broken.setAttribute('role', 'dialog');
+  broken.setAttribute('aria-modal', 'true');
+  broken.baseRect = { left: 200, top: 100, width: 800, height: 600 };
+  env.document.body.appendChild(broken);
+  env.flush();
+  env.flush();
+
+  assert.equal(env.warnings.length, 1, '结构异常应恰好一条 warn');
+  assert.match(env.warnings[0], /dsh-movable-settings/);
+  assert.equal(broken.getAttribute('style'), null, '结构异常时不得写入任何样式');
+  assert.equal(broken.getAttribute('title'), null);
+  assert.equal(env.document.body.querySelector('[data-dsh-ms-layer]'), null);
+  assert.equal(env.errors.length, 0);
+});
+
+test('锚点命中但只有单列（缺 content）时同样降级', () => {
+  const env = createEnvironment();
+  boot(env);
+  const broken = env.element('div');
+  broken.setAttribute('data-shortcut-modal', 'settings');
+  broken.setAttribute('role', 'dialog');
+  broken.setAttribute('aria-modal', 'true');
+  broken.baseRect = { left: 200, top: 100, width: 800, height: 600 };
+  const nav = env.element('nav');
+  nav.appendChild(env.element('div'));
+  broken.appendChild(nav);
+  env.document.body.appendChild(broken);
+  env.flush();
+
+  assert.equal(env.warnings.length, 1, '缺 content 列应恰好一条 warn');
+  assert.equal(broken.getAttribute('style'), null, '不得接管半残面板');
+  assert.equal(env.document.body.querySelector('[data-dsh-ms-layer]'), null);
+});
+
 test('面板出现后接管为绝对定位并挂出 8 向手柄', () => {
   const env = createEnvironment();
   boot(env);
@@ -580,7 +619,7 @@ test('不接管键盘、不干扰遮罩与关闭按钮的既有行为', () => {
   assert.equal(masked, 1, '遮罩点击不受影响');
 });
 
-test('拖动之后的 click 被吞掉，不会误触面板内控件', () => {
+test('拖动结束：与抬手点重合的残留 click 仍被吞掉', () => {
   const env = createEnvironment();
   boot(env);
   const dom = mountSettings(env);
@@ -592,12 +631,85 @@ test('拖动之后的 click 被吞掉，不会误触面板内控件', () => {
   fire(dom.navTitle, 'pointerdown', 210, 110);
   fire(dom.dialog, 'pointermove', 310, 160);
   fire(dom.dialog, 'pointerup', 310, 160);
-  dom.slotHost.dispatchEvent({ type: 'click' });
-  assert.equal(clicks, 0, '拖动结束后的 click 应被吞掉');
 
+  fire(dom.slotHost, 'click', 311, 161);
+  assert.equal(clicks, 0, '与抬手点重合（≤4px）的残留 click 应被吞掉');
+
+  // 时间窗过期后，即便是同点也不再吞
   env.flushTimers();
-  dom.slotHost.dispatchEvent({ type: 'click' });
+  fire(dom.slotHost, 'click', 311, 161);
   assert.equal(clicks, 1, '窗口期过后点击恢复正常');
+});
+
+test('拖动/缩放结束后在新位置的第一次点击必须一次生效', () => {
+  const env = createEnvironment();
+  boot(env);
+  const dom = mountSettings(env);
+  env.flush();
+
+  let closed = 0;
+  dom.closeButton.addEventListener('click', () => { closed += 1; });
+  let typed = 0;
+  dom.optionInput.addEventListener('click', () => { typed += 1; });
+
+  // 拖动面板：抬手点在 (310,160)
+  fire(dom.navTitle, 'pointerdown', 210, 110);
+  fire(dom.dialog, 'pointermove', 310, 160);
+  fire(dom.dialog, 'pointerup', 310, 160);
+
+  // 拖完立刻点关闭按钮（远离抬手点）→ 必须一次生效
+  fire(dom.closeButton, 'click', 950, 130);
+  assert.equal(closed, 1, '拖动后紧接着点关闭按钮必须一次生效');
+
+  // 拖完立刻点输入框 → 必须一次生效
+  fire(dom.optionInput, 'click', 420, 500);
+  assert.equal(typed, 1, '拖动后紧接着点输入框必须一次生效');
+
+  // 缩放（8 向手柄）结束后同理
+  const handle = env.document.body.querySelector('[data-dsh-ms-handle="se"]');
+  fire(handle, 'pointerdown', 0, 0);
+  fire(handle, 'pointermove', 40, 40);
+  fire(handle, 'pointerup', 40, 40);
+  fire(dom.closeButton, 'click', 950, 200);
+  assert.equal(closed, 2, '缩放后紧接着点关闭按钮必须一次生效');
+});
+
+test('被阻断的节点脱离文档再复用后，dispose 仍不残留 title（R3）', () => {
+  const env = createEnvironment();
+  const { effects } = boot(env);
+  const dom = mountSettings(env);
+  env.flush();
+
+  // 先被阻断成 title=""，随后离开文档并触发一次 scan，再被复用：
+  // 复用后它自身已带 title，ensureTooltip 会跳过，因此只能靠「实际改写集合」保证还原。
+  assert.equal(dom.closeButton.getAttribute('title'), '');
+  dom.closeButton.remove();
+  env.flush();
+  dom.header.appendChild(dom.closeButton);
+  env.flush();
+  assert.equal(dom.closeButton.getAttribute('title'), '', '复用后仍是阻断状态');
+
+  effects[0]();
+
+  assert.equal(dom.closeButton.hasAttribute('title'), false, '复用节点不得残留插件写入的 title');
+});
+
+test('条带容器离线重排回原位置后，dispose 仍按原值还原', () => {
+  const env = createEnvironment();
+  const { effects } = boot(env);
+  const dom = mountSettings(env);
+  env.flush();
+
+  assert.equal(dom.navTitle.getAttribute('title'), '拖动移动 · 双击最大化');
+  dom.navList.remove();
+  dom.navTitle.remove();
+  dom.nav.appendChild(dom.navTitle);
+  dom.nav.appendChild(dom.navList);
+  env.flush();
+  assert.equal(dom.navTitle.getAttribute('title'), '拖动移动 · 双击最大化');
+
+  effects[0]();
+  assert.equal(dom.navTitle.hasAttribute('title'), false);
 });
 
 test('dispose 后恢复原状：移除样式、层与监听', () => {

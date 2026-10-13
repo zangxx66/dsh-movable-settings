@@ -29,6 +29,10 @@ window.__ModuleLoader__.load({
     /** 位移超过该阈值才算拖动/缩放，避免吞掉单击与双击。 */
     const DRAG_THRESHOLD = 3;
     const SAVE_DEBOUNCE_MS = 200;
+    /** 拖动结束后「同一位置残留 click」的判定半径（px）：超过它的一律是用户的新点击，必须放行。 */
+    const CLICK_SLOP = 4;
+    /** 残留 click 的兜底时间窗（ms）。 */
+    const SWALLOW_WINDOW_MS = 120;
 
     const PANEL_SELECTOR = 'div[data-shortcut-modal="settings"][role="dialog"][aria-modal="true"]';
     const ANCHOR_SELECTOR = '[data-shortcut-modal="settings"]';
@@ -187,6 +191,8 @@ window.__ModuleLoader__.load({
       let restore = null;
       let interaction = null;
       let swallowClick = false;
+      /** 触发吞点的 pointerup 终点坐标；click 离它太远就说明是用户的新点击。 */
+      let swallowPoint = null;
       let swallowTimer = 0;
       let saveTimer = 0;
       const handles = new Map();
@@ -194,6 +200,8 @@ window.__ModuleLoader__.load({
       const subscribers = new Set();
       /** 被本插件改过 title 的节点 → 原值（null 表示原本没有该属性）。 */
       const titleBackups = new Map();
+      /** 本次实际被改写 title 的节点；还原时遍历它，保证不留残留。 */
+      const titleTouched = new Set();
       /** 提示与按钮文案的翻译函数；locale 服务就绪后由外部替换。 */
       let translator = fallbackTranslate;
 
@@ -237,26 +245,34 @@ window.__ModuleLoader__.load({
        * 避免气泡落到上游控件上；nav 的列表区与 content 的 options 滚动区不在容器内，
        * 天然不会出现提示。scan() 每次都会重做一遍（React 可能重建节点）。
        */
+      /**
+       * 条带结构：panel 的两个直接子元素（nav / content）各自的第一个元素子元素。
+       * 结构异常（缺列或缺标题/header 容器）时返回 null，调用方走静默降级。
+       */
+      function stripStructureOf(panel) {
+        if (!panel) return null;
+        const nav = panel.firstElementChild;
+        const content = nav ? nav.nextElementSibling : null;
+        const titleHost = nav ? nav.firstElementChild : null;
+        const headerHost = content ? content.firstElementChild : null;
+        if (!titleHost || !headerHost) return null;
+        return { titleHost: titleHost, headerHost: headerHost };
+      }
+
       function stripContainers() {
-        if (!bound) return [];
-        const first = bound.firstElementChild;
-        const second = first ? first.nextElementSibling : null;
-        return [
-          first ? first.firstElementChild : null,
-          second ? second.firstElementChild : null,
-        ].filter(Boolean);
+        const structure = stripStructureOf(bound);
+        if (!structure) return [];
+        return [structure.titleHost, structure.headerHost];
       }
 
       function rememberTitle(el) {
-        if (el && !titleBackups.has(el)) titleBackups.set(el, el.getAttribute('title'));
+        if (!el) return;
+        if (!titleBackups.has(el)) titleBackups.set(el, el.getAttribute('title'));
+        titleTouched.add(el);
       }
 
       function ensureTooltip() {
         if (!bound) return;
-        // 已脱离文档的节点不再需要还原，避免记录无限增长。
-        titleBackups.forEach(function (previous, el) {
-          if (!el.isConnected) titleBackups.delete(el);
-        });
         const text = dragTipText();
         stripContainers().forEach(function (container) {
           rememberTitle(container);
@@ -275,10 +291,15 @@ window.__ModuleLoader__.load({
         });
       }
 
-      /** 按原值还原所有被本插件改过 title 的节点（条带容器 + 被阻断的交互后代）。 */
+      /**
+       * 还原所有被本插件改写过的 title。
+       * 遍历「实际改写集合」而不是备份表：即使某节点的原值记录不再可用（例如它中途离开过文档），
+       * 也一定会被 removeAttribute，不会残留我们写下的 `title=""` 或提示文案。
+       */
       function restoreTitles() {
-        titleBackups.forEach(function (previous, el) {
+        titleTouched.forEach(function (el) {
           try {
+            const previous = titleBackups.has(el) ? titleBackups.get(el) : null;
             if (previous === null || previous === undefined) el.removeAttribute('title');
             else el.setAttribute('title', previous);
           } catch (error) {
@@ -286,6 +307,7 @@ window.__ModuleLoader__.load({
           }
         });
         titleBackups.clear();
+        titleTouched.clear();
       }
 
       // -------- 持久化
@@ -556,11 +578,13 @@ window.__ModuleLoader__.load({
         clearInteractionCursor();
         if (!moved) return;
         swallowClick = true;
+        swallowPoint = { x: event.clientX, y: event.clientY };
         if (swallowTimer) window.clearTimeout(swallowTimer);
         swallowTimer = window.setTimeout(function () {
           swallowClick = false;
+          swallowPoint = null;
           swallowTimer = 0;
-        }, 300);
+        }, SWALLOW_WINDOW_MS);
         writeStore();
       }
 
@@ -583,10 +607,27 @@ window.__ModuleLoader__.load({
         if (bound.style.cursor !== '') bound.style.cursor = '';
       }
 
-      /** 拖过之后的 click 不应落到面板内任何控件上。 */
+      /**
+       * 只吞「拖动结束瞬间、与抬手点几乎重合」的那一次残留 click（浏览器在 pointerup
+       * 之后补发、可能误触条带下方控件的噪声）。用户抬手后在新位置的正常点击距离较远，
+       * 一律放行 —— 判据「拖动/缩放结束后紧接着的第一次点击必须一次生效」。
+       */
+      function isResidualClick(event) {
+        if (!swallowPoint) return false;
+        const x = Number(event.clientX);
+        const y = Number(event.clientY);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+        return Math.abs(x - swallowPoint.x) <= CLICK_SLOP && Math.abs(y - swallowPoint.y) <= CLICK_SLOP;
+      }
+
       function onPanelClickCapture(event) {
         if (!swallowClick) return;
         swallowClick = false;
+        if (!isResidualClick(event)) {
+          swallowPoint = null;
+          return;
+        }
+        swallowPoint = null;
         event.stopPropagation();
         if (typeof event.preventDefault === 'function') event.preventDefault();
       }
@@ -642,6 +683,8 @@ window.__ModuleLoader__.load({
       // -------- 绑定 / 清理
 
       function bind(panel) {
+        // 结构异常（缺 nav/content 或缺少标题/header 容器）时不接管：不改样式、不留节点。
+        if (!stripStructureOf(panel)) return;
         bound = panel;
         originalStyle = panel.getAttribute('style');
         const stored = readStore();
@@ -702,6 +745,7 @@ window.__ModuleLoader__.load({
           swallowTimer = 0;
         }
         swallowClick = false;
+        swallowPoint = null;
         clearInteractionCursor();
         if (layer) {
           layer.remove();
@@ -743,25 +787,24 @@ window.__ModuleLoader__.load({
       function scan() {
         if (!active) return;
         const panel = document.querySelector(PANEL_SELECTOR);
-        if (panel) {
-          if (panel !== bound) {
+        // 锚点命中但内部结构异常（缺 nav/content 或缺少标题/header 容器）同样走静默降级。
+        const usable = panel && stripStructureOf(panel) ? panel : null;
+        if (usable) {
+          if (usable !== bound) {
             if (bound) unbind();
-            bind(panel);
+            bind(usable);
           } else {
             updateFallbackButton();
             ensureTooltip();
           }
           return;
         }
-        if (bound) {
-          unbind();
-          return;
-        }
-        if (!warned && document.querySelector(ANCHOR_SELECTOR)) {
+        if (bound) unbind();
+        if (!warned && (panel || document.querySelector(ANCHOR_SELECTOR))) {
           warned = true;
           console.warn(
-            '[dsh-movable-settings] 设置弹窗的 DOM 锚点与预期不符（期望 ' + PANEL_SELECTOR +
-            '），已静默降级：本次不改动弹窗的任何样式与行为。',
+            '[dsh-movable-settings] 设置弹窗的 DOM 结构与本插件预期不符（期望 ' + PANEL_SELECTOR +
+            ' 且含 nav / content 两列各自的标题与 header 容器），已静默降级：本次不改动弹窗的任何样式与行为。',
           );
         }
       }

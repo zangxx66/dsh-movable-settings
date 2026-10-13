@@ -6,12 +6,16 @@
 
 | 交互 | 位置 | 结果 |
 | --- | --- | --- |
-| 拖动 | 面板顶部约 54px 的非交互条带（导航标题区 + 内容列 header 空白处） | 指针变 `move`，面板实时跟随；命中按钮 / 输入框 / 链接 / slot 内容时不启动拖动；悬停条带显示原生 `title` 气泡「拖动移动 · 双击最大化 / 还原」 || 缩放 | 四边 + 四角共 8 个手柄（悬停时淡淡显色） | 最小 480×360，且任意时刻不超出视口可用区 |
+| 拖动 | 面板顶部约 54px 的非交互条带（导航标题区 + 内容列 header 空白处） | 指针变 `move`，面板实时跟随；命中按钮 / 输入框 / 链接 / slot 内容时不启动拖动；悬停条带显示原生 `title` 气泡「拖动移动 · 双击最大化 / 还原」 |
+| 缩放 | 四边 + 四角共 8 个手柄（悬停时淡淡显色） | 最小 480×360，且任意时刻不超出视口可用区 |
 | 双击 | 同拖动条带 | 最大化到视口可用区；再次双击还原到最大化前的几何 |
 | 最大化 / 还原 | 内容列 header 的「最大化」按钮（`settings.action` 槽位，重置按钮左侧，图标 + 文案随状态切换） | 与双击完全等价，是最大化能力的可见入口（`title` / `aria-label` 点明「也可双击标题栏」） |
 | 重置 | 内容列 header 的「重置位置」按钮 | 清空记忆并回到上游默认的居中布局 |
 
 按钮顺序：`最大化`(order 19) → `重置位置`(order 20) → 上游的 `打开配置文件` / `Close`。
+
+拖动 / 缩放结束的瞬间，只有**与抬手点重合**（≤4px、120ms 内）的残留 click 会被吞掉；
+抬手后在新位置的第一次点击一律一次生效 —— 关闭按钮、输入框、下拉都照常触发与聚焦。
 
 `title` 气泡只挂在两个条带容器上：`nav` 的第一个子元素（标题容器）与 `content` 的第一个子元素（54px header）。
 容器内没有自带 `title` 的交互后代会被写成 `title=""` 阻断继承，因此内容列 `options` 滚动区、`nav` 列表区与 header 里的上游控件都不会弹出这个提示。
@@ -26,9 +30,9 @@
 - **纯客户端 DOM 增强**：不遮蔽、不重写任何 shipped slot，不接管键盘事件与 `useModalLayer` 的焦点陷阱；只把面板改成相对 overlay 的绝对定位，并附加一个自管理的交互层。
 - **锚点只用语义属性**：`div[data-shortcut-modal="settings"][role="dialog"][aria-modal="true"]`。构建期 hash 类名（`VOzbGW_*`）会随上游构建变化，一律不依赖。
 - **交互层不进 React 树**：8 个手柄与兜底按钮挂在插件自建的 `body` 子节点（`position: fixed`）上，绝不 `appendChild` 进 React 管理的子列表。
-- **静默降级**：若出现 `[data-shortcut-modal="settings"]` 但不满足完整锚点，插件不改任何原样式、不留多余节点、不抛异常，仅输出一条 `console.warn`。
+- **静默降级**：锚点不匹配，或锚点命中但内部缺少 `nav` / `content` 两列及其标题 / header 容器时，插件都不改任何原样式、不留多余节点、不抛异常，仅输出一条 `console.warn`。
 - **主题一致**：颜色 / 圆角 / 边框只用 `--dsw-alias-*`、`--dsw-radius-*` 主题 token。
-- **提示不误报**：拖动气泡只出现在能力真正生效的条带容器上，并对容器内无自带 `title` 的交互后代写入 `title=""` 阻断继承；`unbind` / `dispose` 时按原值逐一还原所有被改过的节点属性（`titleBackups`）。
+- **提示不误报**：拖动气泡只出现在能力真正生效的条带容器上，并对容器内无自带 `title` 的交互后代写入 `title=""` 阻断继承；`unbind` / `dispose` 时按原值逐一还原所有被改过的节点（实际改写集合 `titleTouched` + 原值表 `titleBackups`），节点中途脱离文档再复用也不会残留 `title=""`。
 - **完全可回收**：`dispose` 时移除注入的 `<style>`、observer、所有监听器、交互层节点与内联覆盖样式。
 
 ## 文件
@@ -37,7 +41,7 @@
 package.json          清单（dsh.bundle.patch + dsh.client）
 cordis.patch.yml      Loader 补丁，插入 id=movable-settings 的插件行
 index.js              Host 半区（空壳：能力全在 Client 半区）
-client.js             核心实现（DOM 增强 + settings.action 重置按钮）
+client.js             核心实现（DOM 增强 + settings.action 最大化/重置按钮）
 locale/zh.json        插件显示名与描述（中文）
 locale/en.json        插件显示名与描述（英文）
 icon.svg              插件图标
