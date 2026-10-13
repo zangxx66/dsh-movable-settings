@@ -21,6 +21,7 @@ test('package.json 是合法的 Client bundle 清单', () => {
   assert.equal(manifest.main, 'index.js');
   assert.equal(manifest.license, 'MIT');
   assert.match(manifest.repository.url, /github\.com\/zangxx66\/dsh-movable-settings/);
+  assert.equal(manifest.repository.directory, 'plugins/dsh-movable-settings');
   assert.match(manifest.homepage, /dsh-movable-settings/);
   assert.match(manifest.bugs.url, /\/issues$/);
   assert.ok(Array.isArray(manifest.keywords) && manifest.keywords.length > 0, 'keywords 应非空');

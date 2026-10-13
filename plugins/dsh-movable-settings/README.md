@@ -52,9 +52,13 @@ test/enhancer.test.mjs 行为测试（node:test）
 
 ## 安装
 
+本插件是本仓库的一部分——仓库根为工作区，插件位于 `plugins/dsh-movable-settings/`（清单里的 `repository.directory` 已据此声明）。
+
 ```
 plugin_manager action=install_bundle target=<本目录的绝对路径>
 ```
+
+从 GitHub 安装时需指向仓库内的这个子目录。
 
 ## 本地验证
 
