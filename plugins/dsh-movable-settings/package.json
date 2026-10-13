@@ -1,7 +1,6 @@
 {
   "name": "dsh-movable-settings",
   "version": "1.0.0",
-  "private": true,
   "description": "Make the DSH settings dialog movable, resizable and maximizable, remembering its geometry.",
   "license": "MIT",
   "type": "module",

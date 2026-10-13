@@ -1,5 +1,8 @@
 # dsh-movable-settings
 
+[![npm version](https://img.shields.io/npm/v/dsh-movable-settings.svg)](https://www.npmjs.com/package/dsh-movable-settings)
+[![license](https://img.shields.io/npm/l/dsh-movable-settings.svg)](LICENSE)
+
 把 DSH Web GUI 内置的「设置」弹窗从固定居中、不可调整，变成**可拖动、可八向缩放、可双击最大化，并记住上次位置与尺寸**的浮层。
 
 ## 行为
@@ -52,13 +55,17 @@ test/enhancer.test.mjs 行为测试（node:test）
 
 ## 安装
 
-本插件是本仓库的一部分——仓库根为工作区，插件位于 `plugins/dsh-movable-settings/`（清单里的 `repository.directory` 已据此声明）。
+从 npm 安装（推荐）：
+
+```
+plugin_manager action=install_bundle target=dsh-movable-settings
+```
+
+从本地目录安装（开发 / 未发布版本）——本插件是本仓库的一部分，仓库根为工作区，插件位于 `plugins/dsh-movable-settings/`（清单里的 `repository.directory` 已据此声明）：
 
 ```
 plugin_manager action=install_bundle target=<本目录的绝对路径>
 ```
-
-从 GitHub 安装时需指向仓库内的这个子目录。
 
 ## 本地验证
 
@@ -69,6 +76,17 @@ node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"
 node --test test/enhancer.test.mjs
 node --test test/manifest.test.mjs
 ```
+
+（等价于 `npm run check` 与 `npm test`。）
+
+## 发布（维护者）
+
+```bash
+npm login      # 首次发布前
+npm publish    # 包名 dsh-movable-settings 未被占用，清单已移除 private
+```
+
+发布后即可 `plugin_manager action=install_bundle target=dsh-movable-settings`。
 
 ## 真机手测步骤（浏览器侧无法自动化的部分）
 
