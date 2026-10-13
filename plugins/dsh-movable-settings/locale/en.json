@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Movable Settings Dialog",
+    "description": "Drag, resize from eight directions and double-click the title bar to maximize the settings dialog; its header carries maximize/restore and reset buttons, and its geometry is remembered."
+  }
+}
