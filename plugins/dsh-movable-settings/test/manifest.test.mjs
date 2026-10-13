@@ -16,7 +16,7 @@ const clientSource = read('client.js');
 const patchText = read('cordis.patch.yml');
 
 test('package.json 是合法的 Client bundle 清单', () => {
-  assert.equal(manifest.name, '@local/dsh-movable-settings');
+  assert.equal(manifest.name, 'dsh-movable-settings');
   assert.equal(manifest.type, 'module');
   assert.equal(manifest.dsh.bundle.patch, './cordis.patch.yml');
   assert.equal(manifest.dsh.client.platform, 'web');
@@ -42,7 +42,7 @@ test('exports 与 files 指向的文件都存在', () => {
 });
 
 test('cordis.patch.yml 插入的行与包名一致', () => {
-  assert.match(patchText, /^- insert:\n {4}- id: movable-settings\n {6}name: '@local\/dsh-movable-settings'\n$/m);
+  assert.match(patchText, /^- insert:\n {4}- id: movable-settings\n {6}name: 'dsh-movable-settings'\n$/m);
 });
 
 test('client.js 以包名注册工厂（模块表 id 必须等于包名）', () => {

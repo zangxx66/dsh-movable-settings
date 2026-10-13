@@ -33,7 +33,7 @@ function boot(env) {
   env.window.__ModuleLoader__ = { load(loaded) { spec.current = loaded; } };
   vm.runInNewContext(clientSource, env.sandbox, { filename: 'client.js' });
   assert.ok(spec.current, 'client.js 应通过 __ModuleLoader__ 注册工厂');
-  assert.equal(spec.current.id, '@local/dsh-movable-settings');
+  assert.equal(spec.current.id, 'dsh-movable-settings');
   const module = spec.current.factory((name) => {
     if (name === 'react') return env.react;
     throw new Error('unexpected require: ' + name);
@@ -725,7 +725,7 @@ test('dispose 后恢复原状：移除样式、层与监听', () => {
 
   effects[0]();
 
-  assert.equal(env.document.head.querySelector('style[data-plugin="@local/dsh-movable-settings"]'), null);
+  assert.equal(env.document.head.querySelector('style[data-plugin="dsh-movable-settings"]'), null);
   assert.equal(env.document.body.querySelector('[data-dsh-ms-layer]'), null);
   assert.equal(dom.dialog.getAttribute('style'), null, '面板内联覆盖应被回收');
   assert.equal(dom.header.getAttribute('title'), null, '条带容器的提示应被回收');

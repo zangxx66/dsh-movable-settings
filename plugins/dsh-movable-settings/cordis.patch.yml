@@ -1,3 +1,3 @@
 - insert:
     - id: movable-settings
-      name: '@local/dsh-movable-settings'
+      name: 'dsh-movable-settings'

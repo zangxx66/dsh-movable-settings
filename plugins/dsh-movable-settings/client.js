@@ -10,7 +10,7 @@
  * - 所有注入的 <style>、监听器、observer、临时节点与内联样式都在 dispose 时回收。
  */
 window.__ModuleLoader__.load({
-  id: '@local/dsh-movable-settings',
+  id: 'dsh-movable-settings',
   factory(require) {
     const React = require('react');
     const h = React.createElement;
@@ -814,8 +814,8 @@ window.__ModuleLoader__.load({
           if (active) return;
           active = true;
           styleEl = document.createElement('style');
-          styleEl.setAttribute('data-plugin', '@local/dsh-movable-settings');
-          styleEl.setAttribute('data-plugin-css', '@local/dsh-movable-settings/movable.css');
+          styleEl.setAttribute('data-plugin', 'dsh-movable-settings');
+          styleEl.setAttribute('data-plugin-css', 'dsh-movable-settings/movable.css');
           styleEl.textContent = CSS_TEXT;
           document.head.appendChild(styleEl);
           observer = new window.MutationObserver(schedule);
