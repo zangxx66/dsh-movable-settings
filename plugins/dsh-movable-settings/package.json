@@ -5,11 +5,35 @@
   "description": "Make the DSH settings dialog movable, resizable and maximizable, remembering its geometry.",
   "license": "MIT",
   "type": "module",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zangxx66/dsh-movable-settings.git"
+  },
+  "homepage": "https://github.com/zangxx66/dsh-movable-settings#readme",
+  "bugs": {
+    "url": "https://github.com/zangxx66/dsh-movable-settings/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "settings",
+    "dialog",
+    "floating-window",
+    "draggable",
+    "resizable",
+    "ui"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg"
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
   },
   "files": [
     "index.js",
@@ -20,6 +44,10 @@
     "README.md",
     "LICENSE"
   ],
+  "scripts": {
+    "check": "node --check index.js && node --check client.js",
+    "test": "node --test test/enhancer.test.mjs test/manifest.test.mjs"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"

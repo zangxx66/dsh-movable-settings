@@ -18,6 +18,14 @@ const patchText = read('cordis.patch.yml');
 test('package.json 是合法的 Client bundle 清单', () => {
   assert.equal(manifest.name, 'dsh-movable-settings');
   assert.equal(manifest.type, 'module');
+  assert.equal(manifest.main, 'index.js');
+  assert.equal(manifest.license, 'MIT');
+  assert.match(manifest.repository.url, /github\.com\/zangxx66\/dsh-movable-settings/);
+  assert.match(manifest.homepage, /dsh-movable-settings/);
+  assert.match(manifest.bugs.url, /\/issues$/);
+  assert.ok(Array.isArray(manifest.keywords) && manifest.keywords.length > 0, 'keywords 应非空');
+  assert.ok(manifest.engines && typeof manifest.engines.node === 'string', 'engines.node 应声明');
+  assert.equal(typeof manifest.scripts.test, 'string');
   assert.equal(manifest.dsh.bundle.patch, './cordis.patch.yml');
   assert.equal(manifest.dsh.client.platform, 'web');
   assert.equal(typeof manifest.dsh.client.immediately, 'boolean');
