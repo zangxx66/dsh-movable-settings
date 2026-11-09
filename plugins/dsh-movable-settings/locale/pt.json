@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Caixa de diálogo de configurações móvel",
+    "description": "Arraste, redimensione em oito direções e dê um clique duplo na barra de título para maximizar a caixa de diálogo de configurações; o cabeçalho traz botões de maximizar/restaurar e redefinir, e a geometria é lembrada."
+  }
+}

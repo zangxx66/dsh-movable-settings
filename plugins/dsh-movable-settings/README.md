@@ -79,6 +79,8 @@ Plugins are installed per profile, so every session in that profile gets it.
 - **主题一致 / Theme-consistent**：颜色 / 圆角 / 边框只用 `--dsw-alias-*`、`--dsw-radius-*` 主题 token。
 - **提示不误报 / No misleading tooltips**：拖动气泡只出现在能力真正生效的条带容器上，并对容器内无自带 `title` 的交互后代写入 `title=""` 阻断继承；`unbind` / `dispose` 时按原值逐一还原所有被改过的节点（实际改写集合 `titleTouched` + 原值表 `titleBackups`），节点中途脱离文档再复用也不会残留 `title=""`。
 - **完全可回收 / Fully reversible**：`dispose` 时移除注入的 `<style>`、observer、所有监听器、交互层节点与内联覆盖样式。
+- **语言覆盖 / Locale coverage**：内置 `zh`、`en`、`de`、`es`、`fr`、`ja`、`pt`、`ru` 共 8 种语言的文案字典（与 DSH 运行时内置语言一致），由 `scope.locale.register` 一次性注册；未启用的语言包按上游 fallback 链回落到 `en`，locale 服务未就绪时仍用内置中文兜底。
+  Built-in dictionaries for all 8 languages DSH ships with (`zh`, `en`, `de`, `es`, `fr`, `ja`, `pt`, `ru`), registered in one `scope.locale.register` call; disabled language packs fall back to `en`, and the inline Chinese dictionary still backs up an unavailable locale service.
 
 ## 文件 / Files
 
@@ -86,9 +88,11 @@ Plugins are installed per profile, so every session in that profile gets it.
 package.json          清单（dsh.bundle.patch + dsh.client）
 cordis.patch.yml      Loader 补丁，插入 id=movable-settings 的插件行
 index.js              Host 半区（空壳：能力全在 Client 半区）
-client.js             核心实现（DOM 增强 + settings.action 最大化/重置按钮）
-locale/zh.json        插件显示名与描述（中文）
-locale/en.json        插件显示名与描述（英文）
+client.js             核心实现（DOM 增强 + settings.action 最大化/重置按钮 + 8 语言内置字典）
+locale/zh.json        插件显示名与描述（中文 / Chinese）
+locale/en.json        插件显示名与描述（英文 / English）
+locale/{ja,de,es,fr,ru,pt}.json  同上的日语 / 德语 / 西班牙语 / 法语 / 俄语 / 葡萄牙语版本
+                      same title & description in Japanese, German, Spanish, French, Russian and Portuguese
 icon.svg              插件图标
 LICENSE               MIT 许可证
 test/dom-stub.mjs     最小 DOM 桩
@@ -99,7 +103,7 @@ test/enhancer.test.mjs 行为测试（node:test）
 
 ```bash
 npm run check   # node --check index.js client.js
-npm test        # 49 项行为与清单断言（node:test）
+npm test        # 50 项行为与清单断言（node:test）
 ```
 
 等价的细项 / equivalent commands:

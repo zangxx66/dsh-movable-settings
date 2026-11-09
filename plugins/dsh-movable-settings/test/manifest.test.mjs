@@ -89,27 +89,51 @@ test('只使用主题 token 表达颜色 / 圆角', () => {
   assert.match(css[1], /var\(--dsw-alias-|var\(--dsw-radius-/);
 });
 
-test('locale 资源含 meta.title / meta.description 且中英键集一致', () => {
-  for (const locale of ['zh', 'en']) {
+const LOCALES = ['zh', 'en', 'de', 'es', 'fr', 'ja', 'pt', 'ru'];
+
+test('locale 资源含非空 meta.title / meta.description 且覆盖 8 种内置语言', () => {
+  for (const locale of LOCALES) {
     const dict = JSON.parse(read(`locale/${locale}.json`));
-    assert.ok(dict.meta && typeof dict.meta.title === 'string' && dict.meta.title.length > 0);
-    assert.ok(dict.meta && typeof dict.meta.description === 'string' && dict.meta.description.length > 0);
+    assert.ok(dict.meta && typeof dict.meta.title === 'string' && dict.meta.title.length > 0, `locale/${locale}.json 缺少 meta.title`);
+    assert.ok(dict.meta && typeof dict.meta.description === 'string' && dict.meta.description.length > 0, `locale/${locale}.json 缺少 meta.description`);
   }
 });
 
-test('client.js 内置字典的中英键集一致且覆盖可见入口', () => {
-  const zhBlock = clientSource.match(/const zh = \{([\s\S]*?)\n {4}\};/);
-  const enBlock = clientSource.match(/const en = \{([\s\S]*?)\n {4}\};/);
-  assert.ok(zhBlock && enBlock, '应能定位 client.js 内的 zh / en 字典');
-  const keysOf = (block) => [...block.matchAll(/'([^']+)':/g)].map((match) => match[1]).sort();
-  const zhKeys = keysOf(zhBlock[1]);
-  assert.deepEqual(zhKeys, keysOf(enBlock[1]), '中英键集必须一致');
+test('locale 资源不含零宽字符 / BOM（U+200B / U+FEFF）', () => {
+  for (const locale of LOCALES) {
+    const raw = read(`locale/${locale}.json`);
+    assert.doesNotMatch(raw, /[\u200B\uFEFF]/, `locale/${locale}.json 含零宽字符`);
+  }
+  assert.doesNotMatch(clientSource, /[\u200B\uFEFF]/, 'client.js 含零宽字符');
+});
+
+test('client.js 内置 8 种语言字典键集完全一致且覆盖可见入口', () => {
+  const blocks = {};
+  for (const locale of LOCALES) {
+    const match = clientSource.match(new RegExp(`const ${locale} = \\{([\\s\\S]*?)\\n {4}\\};`));
+    assert.ok(match, `应能定位 client.js 内的 ${locale} 字典`);
+    blocks[locale] = match[1];
+  }
+  const entriesOf = (block) => [...block.matchAll(/'([^']+)': '([^']*)'/g)];
+  const zhKeys = entriesOf(blocks.zh).map((match) => match[1]).sort();
+  for (const locale of LOCALES) {
+    const entries = entriesOf(blocks[locale]);
+    assert.deepEqual(entries.map((match) => match[1]).sort(), zhKeys, `${locale} 字典键集必须与 zh 一致`);
+    assert.equal(entries.length, zhKeys.length, `${locale} 字典含重复或多余条目`);
+    for (const [key, value] of entries) {
+      assert.ok(value.length > 0, `${locale} 字典 ${key} 的值不得为空`);
+    }
+  }
   for (const key of [
     'action.maximize', 'action.maximize.short', 'action.restore', 'action.restore.short',
     'action.reset', 'action.reset.short', 'tooltip.dragMaximize', 'tooltip.dragRestore',
   ]) {
     assert.ok(zhKeys.includes(key), `字典缺少 ${key}`);
   }
+  const registerCall = clientSource.match(/scope\.locale\.register\(NS, \{([^}]*)\}\)/);
+  assert.ok(registerCall, '应存在 scope.locale.register(NS, {...}) 一次性注册');
+  const registered = registerCall[1].split(',').map((part) => part.trim().split(':')[0].trim()).filter(Boolean).sort();
+  assert.deepEqual(registered, [...LOCALES].sort(), 'register 必须一次性注册全部 8 种语言');
 });
 
 test('icon.svg 是有效 SVG 且不超体积上限', () => {

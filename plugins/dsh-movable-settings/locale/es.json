@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Diálogo de ajustes movible",
+    "description": "Arrastra, cambia el tamaño en ocho direcciones y haz doble clic en la barra de título para maximizar el diálogo de ajustes; su cabecera incluye botones de maximizar/restaurar y restablecer, y la geometría se recuerda."
+  }
+}

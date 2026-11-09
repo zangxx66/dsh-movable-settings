@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Boîte de dialogue des paramètres déplaçable",
+    "description": "Déplacez, redimensionnez dans huit directions et double-cliquez sur la barre de titre pour agrandir la boîte de dialogue des paramètres ; son en-tête propose les boutons Agrandir/Restaurer et Réinitialiser, et sa géométrie est mémorisée."
+  }
+}

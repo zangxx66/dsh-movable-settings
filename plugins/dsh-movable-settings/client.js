@@ -99,6 +99,66 @@ window.__ModuleLoader__.load({
       'tooltip.dragMaximize': 'Drag to move · double-click to maximize',
       'tooltip.dragRestore': 'Drag to move · double-click to restore',
     };
+    const de = {
+      'action.reset': 'Position und Größe des Einstellungsdialogs zurücksetzen',
+      'action.reset.short': 'Position zurücksetzen',
+      'action.maximize': 'Einstellungsdialog maximieren (auch per Doppelklick auf die Titelleiste)',
+      'action.maximize.short': 'Maximieren',
+      'action.restore': 'Einstellungsdialog wiederherstellen (auch per Doppelklick auf die Titelleiste)',
+      'action.restore.short': 'Wiederherstellen',
+      'tooltip.dragMaximize': 'Ziehen zum Verschieben · Doppelklick zum Maximieren',
+      'tooltip.dragRestore': 'Ziehen zum Verschieben · Doppelklick zum Wiederherstellen',
+    };
+    const es = {
+      'action.reset': 'Restablecer la posición y el tamaño del diálogo de ajustes',
+      'action.reset.short': 'Restablecer posición',
+      'action.maximize': 'Maximizar el diálogo de ajustes (también con doble clic en la barra de título)',
+      'action.maximize.short': 'Maximizar',
+      'action.restore': 'Restaurar el diálogo de ajustes (también con doble clic en la barra de título)',
+      'action.restore.short': 'Restaurar',
+      'tooltip.dragMaximize': 'Arrastrar para mover · doble clic para maximizar',
+      'tooltip.dragRestore': 'Arrastrar para mover · doble clic para restaurar',
+    };
+    const fr = {
+      'action.reset': 'Réinitialiser la position et la taille de la boîte de dialogue des paramètres',
+      'action.reset.short': 'Réinitialiser la position',
+      'action.maximize': 'Agrandir la boîte de dialogue des paramètres (ou double-clic sur la barre de titre)',
+      'action.maximize.short': 'Agrandir',
+      'action.restore': 'Restaurer la boîte de dialogue des paramètres (ou double-clic sur la barre de titre)',
+      'action.restore.short': 'Restaurer',
+      'tooltip.dragMaximize': 'Glisser pour déplacer · double-clic pour agrandir',
+      'tooltip.dragRestore': 'Glisser pour déplacer · double-clic pour restaurer',
+    };
+    const ja = {
+      'action.reset': '設定ダイアログの位置とサイズをリセット',
+      'action.reset.short': '位置をリセット',
+      'action.maximize': '設定ダイアログを最大化（タイトルバーのダブルクリックでも可）',
+      'action.maximize.short': '最大化',
+      'action.restore': '設定ダイアログを元に戻す（タイトルバーのダブルクリックでも可）',
+      'action.restore.short': '元に戻す',
+      'tooltip.dragMaximize': 'ドラッグで移動 · ダブルクリックで最大化',
+      'tooltip.dragRestore': 'ドラッグで移動 · ダブルクリックで元に戻す',
+    };
+    const pt = {
+      'action.reset': 'Redefinir a posição e o tamanho da caixa de diálogo de configurações',
+      'action.reset.short': 'Redefinir posição',
+      'action.maximize': 'Maximizar a caixa de diálogo de configurações (ou clique duplo na barra de título)',
+      'action.maximize.short': 'Maximizar',
+      'action.restore': 'Restaurar a caixa de diálogo de configurações (ou clique duplo na barra de título)',
+      'action.restore.short': 'Restaurar',
+      'tooltip.dragMaximize': 'Arraste para mover · clique duplo para maximizar',
+      'tooltip.dragRestore': 'Arraste para mover · clique duplo para restaurar',
+    };
+    const ru = {
+      'action.reset': 'Сбросить положение и размер диалога настроек',
+      'action.reset.short': 'Сбросить положение',
+      'action.maximize': 'Развернуть диалог настроек (или дважды щёлкните по заголовку)',
+      'action.maximize.short': 'Развернуть',
+      'action.restore': 'Восстановить диалог настроек (или дважды щёлкните по заголовку)',
+      'action.restore.short': 'Восстановить',
+      'tooltip.dragMaximize': 'Перетащите, чтобы переместить · двойной щелчок — развернуть',
+      'tooltip.dragRestore': 'Перетащите, чтобы переместить · двойной щелчок — восстановить',
+    };
 
     /** 兜底翻译：locale 服务未就绪时仍给出可读文案。 */
     function fallbackTranslate(key) {
@@ -951,7 +1011,7 @@ window.__ModuleLoader__.load({
         const registerAction = function (scope) {
           if (!scope || typeof scope.effect !== 'function' || !scope.slots || !scope.locale) return;
           scope.effect(function () {
-            return scope.locale.register(NS, { zh: zh, en: en });
+            return scope.locale.register(NS, { zh, en, de, es, fr, ja, pt, ru });
           }, 'dsh-movable-settings: dictionary');
           if (typeof scope.locale.bind === 'function') enhancer.setTranslator(scope.locale.bind(NS));
           scope.slots.inject('settings.action', function () {

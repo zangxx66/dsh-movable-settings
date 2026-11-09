@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Verschiebbarer Einstellungsdialog",
+    "description": "Einstellungsdialog ziehen, in acht Richtungen skalieren und per Doppelklick auf die Titelleiste maximieren; die Kopfzeile bietet Maximieren/Wiederherstellen und Zurücksetzen, und die Geometrie wird gemerkt."
+  }
+}
